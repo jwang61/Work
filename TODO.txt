@@ -1,0 +1,4 @@
+Rewrite Signaling.py (include functions and main)
+Read heatmap.py and rewrite if necessary
+Think about how to create a 3D map from the signals
+
