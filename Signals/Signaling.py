@@ -14,8 +14,10 @@ from scipy.fftpack import fft
 
 REMOVEBACKGROUND = False
 SAVEFIGS = False
-AVGFRAME = 8
-PAIRS = (1, 2,  )  #3, 14, 32
+FACTOR = True
+DIFFERENTIATE = True
+AVGFRAME = 5
+PAIRS = (14,  )  #3, 14, 32
 # _______________________________________________________________________________________________________
 #|                                            COLOR MATRIX                                               |
 #| ______________________________________________________________________________________________________|
@@ -65,7 +67,7 @@ def main():
         # The for loop goes up to the size of 'numPairs', which is the number of antenna pairs, so that
         # the loop can plot data from every antenna pair used.
            # 'timeAxis' is a 1D array contining the time domain values for the obtained raw signals. 
-           # 'signal_list' is a multidimensional array (the number of dimensions is equal to antenna
+           # 'signalList' is a multidimensional array (the number of dimensions is equal to antenna
            #  pairs being used). Each element of the array refers to the obtained signal values for
            #  the correspoding antenna pair. For example, if the 'number' is 3, then the backscattered
            #  amplitudes btained from teh 3rd antenna pair will be plotted. 
@@ -105,7 +107,7 @@ def main():
         pairs.append(allpairs[index])
         print allpairs[index]
     numPairs = len(pairs)
-    # Start the Walabot device
+   # Start the Walabot device
     wlbt.Start()
 
 
@@ -126,8 +128,10 @@ def main():
     # Initializing a zero-filled array, which is then updated with the collected data. The size of the array
     # depends on the number of antenna pairs to be used.  
     timeAxis = []
-    signal_list = []
+    signalList = []
     average_background = calibrate(pairs, numPairs)
+    if DIFFERENTIATE:
+        numPairs *= 3
     # Initializing the figure window for plotting
     plt.ion()  
     fig = plt.figure()
@@ -144,22 +148,21 @@ def main():
     # by using Ctrl+C
     try:
         j=1 # Counter variable for saving the figure
-        line_list = []
+        lineList = []
         # The infinite loop that runs until the user stops the program with keyboard interrupt.
         # This loop allows the Wlaabot to continuously scan the the arena that has been set.
         while True: 
-            sum_list = []
+            sumList = []
             for frame in range(AVGFRAME):
                    
                 # Walabot API function used to initiate the scan 
                 wlbt.Trigger()
             
-                # The elements in the previously declared 'signal_list' are cleared. This is done so that 
-                # every time this loop runs, the 'signal_list' is updated with the new values and doesn't
+                # The elements in the previously declared 'signalList' are cleared. This is done so that 
+                # every time this loop runs, the 'signalList' is updated with the new values and doesn't
                 # carry on the previous values. Having the previous values in the list would disrupt the 
-                # plotting because the size of the 'signal_list' wouldn't match the 'timeAxis' in that case.
-                signal_list = []
-                ft_list = [] 
+                # plotting because the size of the 'signalList' wouldn't match the 'timeAxis' in that case.
+                signalList = []
 
                 # The for loop goes up to the number of antenna pairs used. This loop allows the Walabot
                 # to get the raw signals from each one of the selected number of antenna pairs, for every 
@@ -167,45 +170,53 @@ def main():
                     # 'GetSignal' from WalabotAPI which returns the time domain values and the returned signal
                     # amplitudes. The data from this function is stored in 'targets' (2D array). The first array 
                     # within 'targets' has the returned signal amplitudes and thus, those values are appended to 
-                    # 'signal_list'. The second array in 'targets' contains the time domain values and thus, is 
+                    # 'signalList'. The second array in 'targets' contains the time domain values and thus, is 
                     # assigned to the 'timeAxis'
                 for pair in pairs:
                     targets = wlbt.GetSignal(pair)
-                    signal_list.append(targets[0])
+                    signalList.append(targets[0])
                 timeAxis = targets[1]
 
 
                 # background frame subtracted  
                 if REMOVEBACKGROUND:
-                    signal_list -= average_background
+                    signalList -= average_background
                 
-                if sum_list == []:
-                    sum_list = signal_list
+                if sumList == []:
+                    sumList = signalList
                 else:
-                    for count in range(len(signal_list)):
-                        sum_list[count] = np.add(signal_list[count], sum_list[count])
-            signal_list = [np.divide(sums, AVGFRAME) for sums in sum_list]
-            factor = np.linspace(8, 16, 5000)
-            for signal in signal_list:
-                for i in range(500, 5000):
-                    signal[i]*= factor[i] 
-                for i in range(0, 250):
-                    signal[i]/= 3
+                    for count in range(len(signalList)):
+                        sumList[count] = np.add(signalList[count], sumList[count])
+            signalList = [np.divide(sums, AVGFRAME) for sums in sumList]
             # Loop for writing the collected data to a csv file if file parameter was passed.
+            if DIFFERENTIATE:
+                derivativeList = []
+                for signal in signalList:
+                    derivativeList.append(np.append(np.multiply(np.diff(signal), 1), [0]))
+                for signal in signalList:
+                    derivativeList.append(np.append(np.multiply(np.diff(signal, n=2), 1), [0, 0]))
+                signalList += derivativeList
+            factor = np.linspace(8, 16, 5000)
+            if FACTOR:
+                for signal in signalList:
+                    for i in range(500, 5000):
+                        signal[i]*= factor[i] 
+                    for i in range(0, 250):
+                        signal[i]/= 3
             if f:
-                for i in range(len(signal_list[0])):
+                for i in range(len(signalList[0])):
                     for k in range(numPairs):
-                        f.write(str(signal_list[k][i])+',')
+                        f.write(str(signalList[k][i])+',')
                     f.write('\n')
          
             # The builtin function which updates the figure, with the plots from the previously defined
             # function
-            if line_list == []:
+            if lineList == []:
                 for number in range(numPairs):
-                    line_list.append(ax.plot(timeAxis[::5], signal_list[number][::5], '#'+COLORS[number], linewidth=0.5)[0])
+                    lineList.append(ax.plot(timeAxis[::5], signalList[number][::5], '#'+COLORS[number], linewidth=0.5)[0])
             else:
                 for number in range(numPairs):
-                    line_list[number].set_ydata(signal_list[number][::5])
+                    lineList[number].set_ydata(signalList[number][::5])
                 fig.canvas.draw()
             # Saves the graphs from each scan of the Walabot (optional)
             if SAVEFIGS:
