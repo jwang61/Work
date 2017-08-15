@@ -51,7 +51,7 @@ COLORS = [
 
 APP_X, APP_Y = 200, 50  # location of top-left corner of window
 CANVAS_LENGTH = 700 # in pixels
-
+AVGFRAMES = 1
 
 class RawImageApp(tk.Frame):
     """ Main app class.
@@ -60,7 +60,8 @@ class RawImageApp(tk.Frame):
     def __init__(self, master):
         """ Init the GUI components and the Walabot API.
         """
-        self.logname = raw_input("Please enter file name\n")
+        #self.logname = raw_input("Please enter file name\n")
+        self.logname = "temp.txt"
         self.log = open(self.logname, 'w')
         tk.Frame.__init__(self, master)
         self.canvasPanel = CanvasPanel(self)
@@ -364,7 +365,7 @@ class Walabot:
         """ Try to connect the Walabot device. Return True/False accordingly.
         """
         try:
-            self.wlbt.ConnectAny()
+            self.wlbt.Connect('vMaker18EU')
         except self.wlbt.WalabotError as err:
             if err.code == 19:  # "WALABOT_INSTRUMENT_NOT_FOUND"
                 return False
@@ -422,24 +423,14 @@ class Walabot:
 
     def triggerAndGetRawImageSlice(self):
         """Returns the sensor targies"""
-        i = 0
-        targy = []
-        while i<4:
+        self.wlbt.Trigger()
+        sumlist = self.wlbt.GetRawImageSlice()[0]
+        for i in range(AVGFRAMES-1):
             self.wlbt.Trigger()
-            tar = self.wlbt.GetRawImageSlice()[0]
-            targy.append(tar)
-            i+=1
+            sumlist = np.add(sumlist, self.wlbt.GetRawImageSlice()[0])
+        avgscans = np.divide(sumlist,AVGFRAMES) 
 
-        sum_of_fir = np.add(targy[0],targy[1])
-        sum_of_sec = np.add(targy[2],targy[3])
-        
-       
-
-        tsum1 = np.add(sum_of_fir, sum_of_sec)
-        
-        avg_of_4scans = np.divide(tsum1,4) 
-
-        return avg_of_4scans
+        return avgscans
 
     def getFps(self):
         """ Returns the Walabot current fps as given from the Walabot SDK.

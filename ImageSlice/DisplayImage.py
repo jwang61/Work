@@ -19,10 +19,10 @@ def main():
         rowSplit = matrix[2:-2].split(DELIM2)
         for row in rowSplit:
             img.append([int(x) for x in row.split(DELIM1)])
-        ax.imshow(img, cmap = plt.cm.Reds, interpolation="none", extent=[-45,45,10,0.1])
-        ax.set_aspect(10)
+        ax.imshow(img, cmap = plt.cm.Reds, interpolation="none", extent=[-45,45,4,0.1])
+        ax.set_aspect(15)
         if len(sys.argv) > 2:
-            plt.savefig("image{0:04d}.png".format(count))
+            plt.savefig("images/image{0:04d}.png".format(count))
         else:
             plt.draw()
             plt.pause(0.1)

@@ -13,11 +13,11 @@ import numpy as np
 from scipy.fftpack import fft
 
 REMOVEBACKGROUND = False
-SAVEFIGS = False
+SAVEFIGS = True
 FACTOR = True
-DIFFERENTIATE = True
+DIFFERENTIATE = False
 AVGFRAME = 5
-PAIRS = (14,  )  #3, 14, 32
+PAIRS = (3, 14, )  #3, 14, 32
 # _______________________________________________________________________________________________________
 #|                                            COLOR MATRIX                                               |
 #| ______________________________________________________________________________________________________|
@@ -192,9 +192,9 @@ def main():
             if DIFFERENTIATE:
                 derivativeList = []
                 for signal in signalList:
-                    derivativeList.append(np.append(np.multiply(np.diff(signal), 1), [0]))
+                    derivativeList.append(np.append(np.multiply(np.diff(signal), 2), [0]))
                 for signal in signalList:
-                    derivativeList.append(np.append(np.multiply(np.diff(signal, n=2), 1), [0, 0]))
+                    derivativeList.append(np.append(np.multiply(np.diff(signal, n=2), 4), [0, 0]))
                 signalList += derivativeList
             factor = np.linspace(8, 16, 5000)
             if FACTOR:
@@ -211,16 +211,17 @@ def main():
          
             # The builtin function which updates the figure, with the plots from the previously defined
             # function
+            #print type(lineList[0])
             if lineList == []:
                 for number in range(numPairs):
-                    lineList.append(ax.plot(timeAxis[::5], signalList[number][::5], '#'+COLORS[number], linewidth=0.5)[0])
+                    lineList.append(ax.plot(timeAxis[::5], signalList[number][::5], '#'+COLORS[number], linewidth=0.5, alpha=0.5)[0])
             else:
                 for number in range(numPairs):
                     lineList[number].set_ydata(signalList[number][::5])
                 fig.canvas.draw()
             # Saves the graphs from each scan of the Walabot (optional)
             if SAVEFIGS:
-                plt.savefig("frame"+str(j)+".png")
+                plt.savefig("images/frame"+str(j)+".png")
 
 
             print(j)
