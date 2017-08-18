@@ -10,16 +10,16 @@ THETA_MIN, THETA_MAX, THETA_RES = -4, 4, 1  # SetArenaTheta values
 PHI_MIN, PHI_MAX, PHI_RES = -4, 4, 1  # SetArenaPhi values
 
 #Global Parameters
-NUMPOINTS = 150
+NUMPOINTS = 75
 Y_MIN, Y_MAX = -1, 1
-SPLINEORDER = 5
 MOVINGAVG = 3
-PULSETIME = 0.27
+#This is the time between WalaBot captures and is not consistent
+PULSETIME = 0.415
 
 def setupWalabot():
     wlbt.Init()
     wlbt.SetSettingsFolder()
-    wlbt.Connect('vMaker18EU')
+    wlbt.ConnectAny()
     wlbt.SetProfile(wlbt.PROF_SENSOR_NARROW)
     wlbt.SetArenaR(R_MIN, R_MAX, R_RES)
     wlbt.SetArenaTheta(THETA_MIN, THETA_MAX, THETA_RES)
@@ -40,35 +40,34 @@ def main():
         energy = [0]*NUMPOINTS
         avgEnergy = [0]*NUMPOINTS
         time = [PULSETIME*n for n in range(NUMPOINTS)]
-        freq = np.linspace(0, 1/(2*PULSETIME), NUMPOINTS//2)
-        freq2 = np.linspace(0, 1/(2*PULSETIME), NUMPOINTS//4)
+        freq = np.linspace(0, 60/(2*PULSETIME), NUMPOINTS//2)
+        #freq2 = np.linspace(0, 1/(2*PULSETIME), NUMPOINTS//4)
         spectrum = abs(fft.fft(avgEnergy))
-        spectrum2 = abs(fft.fft(avgEnergy[NUMPOINTS//2:]))
+        #spectrum2 = abs(fft.fft(avgEnergy[NUMPOINTS//2:]))
  
         time2 = datetime.datetime.now()
         line = ax.plot(time, avgEnergy)
         line2 = ax2.plot(freq, spectrum[:NUMPOINTS//2])
-        line3 = ax2.plot(freq2, spectrum2[:NUMPOINTS//4])
+        #line3 = ax2.plot(freq2, spectrum2[:NUMPOINTS//4])
         # The infinite loop that runs until the user stops the program with keyboard interrupt.
         # This loop allows the Wlaabot to continuously scan the the arena that has been set.
         while True: 
             time1 = time2
             time2 = datetime.datetime.now()
-            #print time2-time1
+            print time2-time1
             # Walabot API function used to initiate the scan 
             wlbt.Trigger()
             ener = wlbt.GetImageEnergy()
             energy = energy[1:] + [ener]
-            avgEnergy = avgEnergy[1:] + [sum(energy[-MOVINGAVG:])/MOVINGAVG]
+            avgEnergy = avgEnergy[1:] + [sum(energy[-MOVINGAVG:])]
             spectrum = abs(fft.fft(avgEnergy))
-            spectrum2 = abs(fft.fft(avgEnergy[NUMPOINTS//2:]))
+            #spectrum2 = abs(fft.fft(avgEnergy[NUMPOINTS//2:]))
             line[0].set_ydata(avgEnergy)
             line2[0].set_ydata(spectrum[:NUMPOINTS//2])
-            line3[0].set_ydata(spectrum2[:NUMPOINTS//4])
-            #print freq[np.argmax(spectrum[5:NUMPOINTS//2]) + 5]
+            #line3[0].set_ydata(spectrum2[:NUMPOINTS//4])
             
 
-            if j%10 == 1:
+            if j%5 == 1:
                 y_max = max(avgEnergy)
                 y_min = min(avgEnergy)
                 ax.set_ylim([y_min, y_max])
@@ -78,9 +77,9 @@ def main():
             fig.canvas.draw()
             
             j+=1
-            if j%50 == 0 :
-                plt.savefig('shot{}.png'.format(j))
-                print 'screenshot'
+            #if j%50 == 0 :
+                #plt.savefig('shot{}.png'.format(j))
+                #print 'screenshot'
 
     except KeyboardInterrupt:
         pass

@@ -55,7 +55,7 @@ def main():
     wlbt.Start()
     
     plt.ion()
-    fig = plt.figure(figsize=(20,20))
+    fig = plt.figure(figsize=(6,6))
     ax = fig.add_subplot(211)
     ax2 = fig.add_subplot(221)
 
@@ -76,7 +76,7 @@ def main():
             image2.set_data(curImage)
             fig.canvas.draw()
             framecount += 1
-            plt.savefig("images/frame{0:04d}.png".format(framecount))
+            #plt.savefig("images/frame{0:04d}.png".format(framecount))
     except KeyboardInterrupt:
         pass
 
