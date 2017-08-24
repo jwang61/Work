@@ -41,14 +41,11 @@ def main():
         avgEnergy = [0]*NUMPOINTS
         time = [PULSETIME*n for n in range(NUMPOINTS)]
         freq = np.linspace(0, 60/(2*PULSETIME), NUMPOINTS//2)
-        #freq2 = np.linspace(0, 1/(2*PULSETIME), NUMPOINTS//4)
         spectrum = abs(fft.fft(avgEnergy))
-        #spectrum2 = abs(fft.fft(avgEnergy[NUMPOINTS//2:]))
  
         time2 = datetime.datetime.now()
         line = ax.plot(time, avgEnergy)
         line2 = ax2.plot(freq, spectrum[:NUMPOINTS//2])
-        #line3 = ax2.plot(freq2, spectrum2[:NUMPOINTS//4])
         # The infinite loop that runs until the user stops the program with keyboard interrupt.
         # This loop allows the Wlaabot to continuously scan the the arena that has been set.
         while True: 
@@ -61,10 +58,8 @@ def main():
             energy = energy[1:] + [ener]
             avgEnergy = avgEnergy[1:] + [sum(energy[-MOVINGAVG:])]
             spectrum = abs(fft.fft(avgEnergy))
-            #spectrum2 = abs(fft.fft(avgEnergy[NUMPOINTS//2:]))
             line[0].set_ydata(avgEnergy)
             line2[0].set_ydata(spectrum[:NUMPOINTS//2])
-            #line3[0].set_ydata(spectrum2[:NUMPOINTS//4])
             
 
             if j%5 == 1:
