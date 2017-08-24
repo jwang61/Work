@@ -15,6 +15,7 @@ Y_MIN, Y_MAX = -1, 1
 MOVINGAVG = 3
 #This is the time between WalaBot captures and is not consistent
 PULSETIME = 0.415
+SCREENSHOTINTERVAL = 10
 
 def setupWalabot():
     wlbt.Init()
@@ -72,7 +73,7 @@ def main():
             fig.canvas.draw()
             
             j+=1
-            #if j%50 == 0 :
+            #if j%SCREENSHOTINTERVAL == 0 :
                 #plt.savefig('shot{}.png'.format(j))
                 #print 'screenshot'
 
